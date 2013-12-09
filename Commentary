@@ -1,0 +1,172 @@
+Create Visitor
+
+POST /Visitors 
+{
+"VisitorId":"1234" ??
+}
+
+201 Created 
+location: /Visitors/1234
+set-cookie: VisitorId=1234, path=/, domain=comparethemarket.com, expires=01-01-2112 ??
+{
+	"AccountId":"qwerty",
+	"VisitorId":"1234"
+}
+
+
+Create Visit
+
+POST /Visit
+{
+	"VisitorId":"1234",
+	"AccountId":"qwerty",
+	"LandingURL":"http://www.ctm.com", ??
+	"Referer":"http://www.google.com/",
+	"UserAgent":"blaablaa",
+	"ClientIP":"10.3.4.5"
+	"BrowserCapabilities":{
+				"JavascriptVer":"x",
+				"ScreenRes":"x,y",
+				"blaa":""}
+}
+
+201 Created
+location: /Visit/abcd
+set-cookie: VisitId=abcd, path=/, domain=comparethemarket.com, expires=session
+
+
+Pageview
+
+POST /PageView
+{
+	"VisitorId":"1234",
+	"AccountId":"qwerty",
+	"VisitId":"abcd",
+	"URI":"http://somepage"
+}
+
+202 Accepted
+
+
+Expose to MVTest
+
+>>If cookie exists with MVTest=567|Variant=9876
+GET /MVTest/567/Variant/9876
+200 Ok
+{
+	"VariantName":"A",
+	"VariantId":"9876"
+	"Properties":{
+		"MainLogoURL":"http://",
+		"CssURL":"http://",
+		"HelpText":"ipsum lorem skdnsjnds"
+	}
+}
+
+POST /MVTest/567/Exposures ?? Variants may be better name?
+{
+	"VisitorId":"1234",
+	"AccountId":"qwerty",
+	"Visit":"abcd"
+}
+>> Is this an Event or a Command?? If an event the event-stream could be named TestId-VisitorId - something listening to the projection of these stream types could issue commands to do things...
+>> Hash (MD5) VisitorId, MVTestId to determine variant -- Need to cache the variant somewhere?? Cookie??
+
+303 See Other
+location: /MVTest/567/Variant/9876
+{
+	"VariantName":"A",
+	"VariantId":"9876"
+	"Properties":{
+		"MainLogoURL":"http://",
+		"CssURL":"http://",
+		"HelpText":"ipsum lorem skdnsjnds"
+	}
+}
+>> possibly want to log successful exposure?? once rendered in browser or actually executed variant??
+
+
+Success Criteria Met
+
+POST /MVTest/SuccessCriteria/7987 
+// POST /MVTest/567/Variant/A/SuccessCriteria/1
+{
+	"VisitorId":"1234",
+	"AccountId":"qwerty",
+	"VisitId":"abcd"
+}
+>> no need to pass variant or test as this can be determined based on exposures for visit - do we need visitor ID? maybe for correlation...
+
+
+===== July 2013 ====
+
+Thoughts: 
+
+Should MV Test need to know about visit or visitor ???? or should it just get something to hash against? and pass it back as a correlation id? - We could use a sliding window for session identification?
+Should we POST and Exposure which returns a list of options (rel) to PUT successes to? or is the successful outcome a different concept/resource?
+Should we PUT to the SuccessCriteria resource as it will be well defined ahead of test ie PPS or Clicked on button x...?
+Work out which Machine Learning algos to use in analysis of MVT and Personalisation use cases
+
+
+Usage Scenarios:
+
+MV Test, exposed and success criteria met in one session
+MV Test, exposed in one session, come back, exposed again and this time success criteria met
+MV Test, exposed and never triggered success criteria
+
+n=1 Personalisation, exposed and success criteria met in one session
+n=1 Personalisation, exposed in one session, come back, exposed again and this time success criteria met
+n=1 Personalisation, exposed and never triggered success criteria
+
+Success Criteria may be in another app? email for example? or twitter interaction?
+
+
+Business Model:
+
+Maas = MVT as a Service = MVT, Personalisation & Reporting/Feedback/API
+Charge for MaaS by volume
+Charge for personalisation dimensions/traits - eg 1, 5, 10, 25, 100, >100
+
+Open Source the MVT & Personalisation service for community adoption
+
+Closed source for the decision algorithms, reporting/analysis IPR
+
+Lean start up
+
+Financials: 
+
+How much does it cost to -
+	serve x MVTs? (bandwidth, compute, exposure & success criteria)
+	serve y n=1?
+	serve none? - overheads
+	store each MVT
+	store each personalisation trait
+	service a customer
+	advertise/business growth
+
+TODO:- Business model canvas
+
+
+
+Architecture:
+
+Event Driven System with Immutable Event Store for analytics.
+Realtime stream of events for correlation
+
+Start on PaaS until volume dictats move but could end up with seperate systems - 
+
+Run on AWS or similar.
+
+core domain
+	collection - node.js? .Net MVC?
+	MVT - MD5 Hash, across integer space = variant by weighting
+	persistence - EventStore as Book of Record
+	personalisation & analysis - clojure? Julia? Graph DB? 
+	account (setup, monitor/watch, finance, usage, reporting) - WebSockets browser based UI (gracefull fallback), d3
+
+secondary domain
+	public api(rate monitoring) = homegrown
+	deployment = chef + orchestration (IronFan?)
+	immune system(logging, testing, scaling, monitoring, alerting) = mix of Splunk?, Selenium, Phantomjs, NewRelic? AppDynamics?
+	issue tracking = GitHub?
+	

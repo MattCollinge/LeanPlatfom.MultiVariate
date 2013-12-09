@@ -1,0 +1,18 @@
+{
+  "name": "LeanPlatform.MultiVariate",
+  "version": "0.0.0",
+  "description": "HTTP REST Multivariate testing API for usage in a Lean Build Measure Learn system",
+  "main": "mvt.js",
+  "dependencies": {
+    "http": "~0.0.0",
+    "express": "~3.1.1",
+    "socket.io": "~0.9.14",
+    "jade": "~0.28.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Matt Collinge",
+  "license": "BSD"
+}
