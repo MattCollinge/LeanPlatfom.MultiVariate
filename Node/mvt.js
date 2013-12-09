@@ -10,7 +10,7 @@ app.configure(function(){
     app.use(express.bodyParser());
 });
 
-var port = 80;
+var port = 8000;
 server.listen(port);
 console.log("Listening on port " + port);
 
