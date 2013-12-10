@@ -1,0 +1,92 @@
+# Docker: http://docs.docker.io/en/latest/installation/vagrant/
+
+# Install Virtualbox & Vagrant
+Install virtualbox from https://www.virtualbox.org/ 
+Install vagrant from http://www.vagrantup.com/ 
+
+# Get Docker
+git clone https://github.com/dotcloud/docker.git
+cd docker
+
+# Start Vagrant instnace in Docker folder
+vagrant up
+
+# Connect to vagrant instance
+vagrant ssh
+
+# Download an ubuntu image
+sudo docker pull ubuntu
+
+# Set up Redis image: http://docs.docker.io/en/latest/examples/running_redis_service/ 
+mk dir redis
+cd redis
+
+touch Dockerfile
+
+nano Dockerfile
+
+# Paste ===>
+
+FROM        ubuntu:12.10
+RUN         apt-get update
+RUN         apt-get -y install redis-server
+EXPOSE      6379
+ENTRYPOINT  ["/usr/bin/redis-server"]
+
+# <======
+
+# build redis image, tag as matt/redis
+sudo docker build -t matt/redis .
+
+# run container in detached mode (-d) 
+sudo docker run -name redis -d matt/redis
+
+
+
+#Create node instance and link to the redis server image
+# from: http://docs.docker.io/en/latest/examples/nodejs_web_app/
+mk dir node
+cd node
+
+#copy node source to ./src
+
+touch dockerfile
+
+nano Dockerfile
+
+# Paste ==>
+
+	FROM        ubuntu:12.10
+	RUN         apt-get update
+	RUN         apt-get -y install nodejs
+
+	# Bundle app source
+	ADD . /src
+	# Install app dependencies
+	RUN cd /src; npm install
+
+	EXPOSE  8080
+	CMD ["node", "/src/index.js"]
+
+# <==
+
+# build node image
+sudo docker build -t matt/nodejs-app .
+
+# run image
+sudo docker run -link redis:db -i -p 49160:8080 -d matt/nodejs-app -name node
+
+# sudo docker run -link redis:db -i -t ubuntu:12.10 /bin/bash
+
+# Print output of new container
+	# Get container ID
+	sudo docker ps
+
+	# Print app output
+	sudo docker logs <container id>
+
+# get info on docker conatiner instance
+sudo docker ps
+
+# hit local port that maps to container port (8080)
+curl -i localhost:49160
